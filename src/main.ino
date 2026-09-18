@@ -9,6 +9,7 @@ MeInfraredReceiver infraredReceiver(PORT_6);
 
 int motorSpeed[2] = { 100, 100 };
 const int avoidDist = 40; // cm
+const int maxDist = 400; // cm
 const int minSpaceDist = 100; // cm
 const unsigned long changeDirectionInterval = 15000; // ms
 const int maxTurnTime = 3000; // ms
@@ -39,28 +40,31 @@ void setup() {
 }
 
 void loop() {
-  handleRemote();
+  // handleRemote();
+  
   if (!robotRunning) {
     stopMotors();
     return;
   }
 
   float distance = ultrasonic.distanceCm();
+  Serial.println("Distance: " + String(distance) + " cm");
+  Serial.println("Mode: " + mode);
 
   if (mode == "driving") {
+
     if (distance < avoidDist) {
       driveBackward();
       delay(random(500, 1500));
-      decideTurnDirection();
       mode = "avoiding";
     } else if (millis() - startMillis >= changeDirectionInterval) {
-      startMillis = millis();
       decideTurnDirection();
       turnStartMillis = millis();
       turnDuration = random(minTurnTime, maxTurnTime + 1);
       driveBackward();
       delay(random(1000, 2000));
       mode = "exploring";
+      startMillis = millis();
     } else {
       driveForward(); 
     }
@@ -70,15 +74,19 @@ void loop() {
     } else if (turnDirection == 'R') {
       turnRight();
     }
-    delay(200);
+    delay(500);
     distance = ultrasonic.distanceCm();
+    // Serial.println("Distance: " + String(distance) + " cm");
     if (distance >= minSpaceDist) {
       startMillis = millis();
       mode = "driving";
+    } else {
+      return;
     }
   } else if (mode == "exploring") {
     setRanomDrivingSpeed();
-    if (distance >= exploreDist || millis() - turnStartMillis >= turnDuration) {
+    const unsigned long elapsedTime = millis() - turnStartMillis;
+    if (distance >= exploreDist || elapsedTime >= turnDuration) {
       startMillis = millis();
       mode = "driving";
     } else {
@@ -93,18 +101,14 @@ void loop() {
 
 void handleRemote() {
   infraredReceiver.loop();
-  if (!infraredReceiver.available()) {
-    return;
-  }
+  const uint8_t code = infraredReceiver.getCode();
 
-  const uint8_t command = infraredReceiver.read();
-  if (command == IR_BUTTON_A) {
+  if (code == IR_BUTTON_A) {
+    Serial.println("IR:START");
     robotRunning = true;
-    mode = "driving";
-    startMillis = millis();
-  } else if (command == IR_BUTTON_B) {
+  } else if (code == IR_BUTTON_C) {
+    Serial.println("IR:STOP");
     robotRunning = false;
-    mode = "driving";
     stopMotors();
   }
 }
