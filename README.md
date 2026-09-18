@@ -15,8 +15,7 @@ To edit the code of the robot in the arduino IDE you need the mBlock drivers ([1
 1. Download and install the CH340 driver required by mCore (restart your computer after the installation is done).
    1. ***[CH340 for Windows](http://www.wch-ic.com/downloads/CH341SER_EXE.html)\***
    2. ***[CH340 for MacOS](http://www.wch-ic.com/downloads/CH341SER_MAC_ZIP.html)\***
-2. Open Arduino IDE, refer to ***[the documentation](https://github.com/Makeblock-official/Makeblock-Libraries)*** to download and configure the makeblock-library files.
-3. Open `main.ino` in VS Code.
-4. Turn on the mBot and connect it to your computer
-5. Select the board over the `/dev/tty.wchusbserial***`port. Set it as an `Arduino Uno` board. 
-6. You should now be able to compile and upload the code to the mBot
+2. Open the project folder and add it to the platform op plugin in VS Code.
+3. Turn on the mBot and connect it to your computer
+4. Select the board over the `/dev/tty.wchusbserial***`port. Set it as an `Arduino Uno` board. 
+5. You should now be able to compile and upload the code to the mBot
