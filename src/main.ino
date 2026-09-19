@@ -7,11 +7,11 @@ MeDCMotor motor1(M1);
 MeDCMotor motor2(M2);
 MeInfraredReceiver infraredReceiver(PORT_6);
 
-int motorSpeed[2] = { 100, 100 };
+int motorSpeed[2] = { 150, 150 };
 const int avoidDist = 40; // cm
 const int maxDist = 400; // cm
 const int minSpaceDist = 100; // cm
-const unsigned long changeDirectionInterval = 15000; // ms
+const unsigned long changeDirectionInterval = 8000; // ms
 const int maxTurnTime = 3000; // ms
 const int minTurnTime = 500; // ms
 const int exploreDist = 500; // 5 meters, if the sensor can measure that far
@@ -40,7 +40,7 @@ void setup() {
 }
 
 void loop() {
-  // handleRemote();
+  handleRemote();
   
   if (!robotRunning) {
     stopMotors();
@@ -54,15 +54,18 @@ void loop() {
   if (mode == "driving") {
 
     if (distance < avoidDist) {
+      decideTurnDirection();
       driveBackward();
-      delay(random(500, 1500));
+      delay(random(500, 1000));
+      
       mode = "avoiding";
     } else if (millis() - startMillis >= changeDirectionInterval) {
       decideTurnDirection();
-      turnStartMillis = millis();
+      
       turnDuration = random(minTurnTime, maxTurnTime + 1);
       driveBackward();
       delay(random(1000, 2000));
+      turnStartMillis = millis();
       mode = "exploring";
       startMillis = millis();
     } else {
@@ -71,23 +74,24 @@ void loop() {
   } else if (mode == "avoiding") {
     if (turnDirection == 'L') {
       turnLeft();
-    } else if (turnDirection == 'R') {
+    } else {
       turnRight();
     }
-    delay(500);
+    
     distance = ultrasonic.distanceCm();
     // Serial.println("Distance: " + String(distance) + " cm");
     if (distance >= minSpaceDist) {
       startMillis = millis();
+      setRandomDrivingSpeed();
       mode = "driving";
     } else {
       return;
     }
   } else if (mode == "exploring") {
-    setRanomDrivingSpeed();
     const unsigned long elapsedTime = millis() - turnStartMillis;
     if (distance >= exploreDist || elapsedTime >= turnDuration) {
       startMillis = millis();
+      //setRandomDrivingSpeed();
       mode = "driving";
     } else {
       if (turnDirection == 'L') {
@@ -114,17 +118,27 @@ void handleRemote() {
 }
 
 void decideTurnDirection() {
-  const float rand_dir = random(0, 1);
-  if (rand_dir < .75) {
+  const long randDir = random(0, 4);
+  if (randDir < 3) {
     turnDirection = 'L';
   } else {
     turnDirection = 'R';
   }
 }
 
-void setRanomDrivingSpeed() {
-  motorSpeed[0] = random(98,100);
-  motorSpeed[1] = random(98,100);
+void setRandomDrivingSpeed() {
+  motorSpeed[0] = random(140,200);
+  motorSpeed[1] = random(140,200);
+}
+
+void driveForward() {
+  motor1.run(motorSpeed[0]);
+  motor2.run(-motorSpeed[1]);
+}
+
+void driveBackward() {
+  motor1.run(-motorSpeed[0]);
+  motor2.run(motorSpeed[1]);
 }
 
 void turnLeft() {
@@ -137,15 +151,6 @@ void turnRight() {
   motor2.run(motorSpeed[1]);
 }
 
-void driveForward() {
-  motor1.run(motorSpeed[0]);
-  motor2.run(-motorSpeed[1]);
-}
-
-void driveBackward() {
-  motor1.run(-motorSpeed[0]);
-  motor2.run(motorSpeed[1]);
-}
 
 void stopMotors() {
   motor1.stop();
